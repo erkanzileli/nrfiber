@@ -21,12 +21,15 @@ func FromContext(c *fiber.Ctx) *newrelic.Transaction {
 //	app := fiber.New()
 //	// Add the nrfiber middleware before other middlewares or routes:
 //	app.Use(nrfiber.Middleware(app))
-func Middleware(app *newrelic.Application) fiber.Handler {
+func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 	if nil == app {
 		return func(c *fiber.Ctx) error {
 			return nil
 		}
 	}
+
+	configMap := createConfigMap(configs...)
+	noticeErrorEnabled := configMap[configKeyNoticeErrorEnabled].(bool)
 
 	return func(c *fiber.Ctx) error {
 		txn := app.StartTransaction(createTransactionName(c))
@@ -38,47 +41,26 @@ func Middleware(app *newrelic.Application) fiber.Handler {
 
 		err := c.Next()
 		statusCode := c.Context().Response.StatusCode()
-		responseWriter := txn.SetWebResponse(&dummyResponseWriter{headers: convertResponseHeaders(&c.Response().Header)})
 
 		if err != nil {
 			if fiberErr, ok := err.(*fiber.Error); ok {
 				statusCode = fiberErr.Code
-				responseWriter.Write([]byte(fiberErr.Message))
-			} else {
-				responseWriter.Write(c.Response().Body())
+			}
+			if noticeErrorEnabled {
+				txn.NoticeError(err)
 			}
 		}
 
-		responseWriter.WriteHeader(statusCode)
+		txn.SetWebResponse(nil).WriteHeader(statusCode)
 		return nil
 	}
 }
-
-type dummyResponseWriter struct {
-	headers http.Header
-}
-
-func (rw *dummyResponseWriter) Header() http.Header { return rw.headers }
-
-func (rw *dummyResponseWriter) Write(b []byte) (int, error) { return 0, nil }
-
-func (rw *dummyResponseWriter) WriteHeader(code int) {}
 
 func createTransactionName(c *fiber.Ctx) string {
 	return fmt.Sprintf("%s %s", c.Request().Header.Method(), c.Request().URI().Path())
 }
 
 func convertRequestHeaders(fastHttpHeaders *fasthttp.RequestHeader) http.Header {
-	headers := make(http.Header)
-
-	fastHttpHeaders.VisitAll(func(k, v []byte) {
-		headers.Set(string(k), string(v))
-	})
-
-	return headers
-}
-
-func convertResponseHeaders(fastHttpHeaders *fasthttp.ResponseHeader) http.Header {
 	headers := make(http.Header)
 
 	fastHttpHeaders.VisitAll(func(k, v []byte) {

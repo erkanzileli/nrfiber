@@ -1,58 +1,34 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"time"
-
+	"fmt"
+	"github.com/erkanzileli/nrfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"log"
+	"net/http"
 )
 
-func createSegment(c *fiber.Ctx, name string) func() {
-	txn := FromContext(c)
-	s := newrelic.Segment{
-		Name:      "GET /users controller",
-		StartTime: txn.StartSegmentNow(),
-	}
-	return s.End
+type customErr struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
 }
 
-var (
-	sampleResponseBody = map[string]string{
-		"id":   "17389123",
-		"name": "ezekiel",
-	}
-	sampleErrorBody = map[string]string{
-		"message": "wrong request",
-		"code":    "red",
-	}
-)
+func (ce customErr) Error() string {
+	return fmt.Sprintf("code: %d, message: %s", ce.Code, ce.Message)
+}
 
 func main() {
 	app := fiber.New()
-	nr, err := newrelic.NewApplication(newrelic.ConfigEnabled(true), newrelic.ConfigAppName("fiber-demo"), newrelic.ConfigLicense("license-key"))
+	nr, err := newrelic.NewApplication(newrelic.ConfigEnabled(true), newrelic.ConfigAppName("demo"), newrelic.ConfigLicense("license-key"))
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	app.Use(Middleware(nr))
-
-	app.Get("/users", func(c *fiber.Ctx) error {
-		defer createSegment(c, "GET /users controller")()
-
-		time.Sleep(10 * time.Millisecond)
-
-		return c.Status(http.StatusOK).JSON(sampleResponseBody)
+	app.Use(nrfiber.Middleware(nr, nrfiber.ConfigNoticeErrorEnabled(true)))
+	app.Get("/give-me-error", func(ctx *fiber.Ctx) error {
+		err := customErr{Message: "wrong request", Code: 4329}
+		ctx.Status(http.StatusBadRequest).JSON(err)
+		return err
 	})
-
-	app.Post("/users", func(c *fiber.Ctx) error {
-		defer createSegment(c, "POST /users controller")()
-
-		time.Sleep(15 * time.Millisecond)
-		c.Response().Header.Add("error", "true")
-		return c.Status(http.StatusBadRequest).JSON(sampleErrorBody)
-	})
-
-	log.Fatal(app.Listen(":3000"))
+	app.Listen(":3000")
 }
