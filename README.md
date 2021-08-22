@@ -1,6 +1,6 @@
 # nrfiber
 
-Provides auto instrumentation for [NewRelic]() and [GoFiber]().
+Provides auto instrumentation for [NewRelic](https://newrelic.com) and [GoFiber](https://gofiber.io).
 
 ## Install
 
