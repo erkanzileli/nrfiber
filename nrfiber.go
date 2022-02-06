@@ -29,7 +29,7 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 	}
 
 	configMap := createConfigMap(configs...)
-	noticeErrorEnabled := configMap[configKeyNoticeErrorEnabled].(bool)
+	noticeErrorEnabled := noticeErrorEnabled(configMap)
 
 	return func(c *fiber.Ctx) error {
 		txn := app.StartTransaction(createTransactionName(c))

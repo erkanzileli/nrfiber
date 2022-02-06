@@ -23,3 +23,12 @@ func createConfigMap(configs ...*config) map[string]interface{} {
 	}
 	return configMap
 }
+
+func noticeErrorEnabled(configMap map[string]interface{}) bool {
+	if val, ok := configMap[configKeyNoticeErrorEnabled]; ok {
+		if boolVal, ok := val.(bool); ok {
+			return boolVal
+		}
+	}
+	return false
+}
