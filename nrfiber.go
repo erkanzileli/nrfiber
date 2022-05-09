@@ -52,7 +52,8 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 		}
 
 		txn.SetWebResponse(nil).WriteHeader(statusCode)
-		return nil
+
+		return err
 	}
 }
 
