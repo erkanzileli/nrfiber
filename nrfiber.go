@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -29,7 +30,8 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 	}
 
 	configMap := createConfigMap(configs...)
-	noticeErrorEnabled := noticeErrorEnabled(configMap)
+	noticeError := noticeErrorEnabled(configMap)
+	noticeInternalServerError := noticeInternalServerErrorEnabled(configMap)
 
 	return func(c *fiber.Ctx) error {
 		txn := app.StartTransaction(createTransactionName(c))
@@ -46,9 +48,12 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 			if fiberErr, ok := err.(*fiber.Error); ok {
 				statusCode = fiberErr.Code
 			}
-			if noticeErrorEnabled {
+			if noticeError {
 				txn.NoticeError(err)
 			}
+		} else if statusCode >= fiber.StatusInternalServerError && 
+			noticeInternalServerError {
+			txn.NoticeError(errors.New(fmt.Sprintf("%d", statusCode)))
 		}
 
 		txn.SetWebResponse(nil).WriteHeader(statusCode)
