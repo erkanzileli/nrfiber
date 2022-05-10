@@ -2,6 +2,7 @@ package nrfiber
 
 const (
 	configKeyNoticeErrorEnabled = "NoticeErrorEnabled"
+	configKeyNoticeInternalServerErrorEnabled = "NoticeInternalServerErrorEnabled"
 )
 
 type config struct {
@@ -16,6 +17,13 @@ func ConfigNoticeErrorEnabled(enabled bool) *config {
 	}
 }
 
+func ConfigNoticeInternalServerErrorEnabled(enabled bool) *config {
+	return &config{
+		key:   configKeyNoticeInternalServerErrorEnabled,
+		value: enabled,
+	}
+}
+
 func createConfigMap(configs ...*config) map[string]interface{} {
 	configMap := make(map[string]interface{}, len(configs))
 	for _, c := range configs {
@@ -26,6 +34,15 @@ func createConfigMap(configs ...*config) map[string]interface{} {
 
 func noticeErrorEnabled(configMap map[string]interface{}) bool {
 	if val, ok := configMap[configKeyNoticeErrorEnabled]; ok {
+		if boolVal, ok := val.(bool); ok {
+			return boolVal
+		}
+	}
+	return false
+}
+
+func noticeInternalServerErrorEnabled(configMap map[string]interface{}) bool {
+	if val, ok := configMap[configKeyNoticeInternalServerErrorEnabled]; ok {
 		if boolVal, ok := val.(bool); ok {
 			return boolVal
 		}
