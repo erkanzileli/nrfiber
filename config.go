@@ -2,6 +2,7 @@ package nrfiber
 
 const (
 	configKeyNoticeErrorEnabled = "NoticeErrorEnabled"
+	configKeyStatusCodeIgnored  = "StatusCodeIgnored"
 )
 
 type config struct {
@@ -13,6 +14,13 @@ func ConfigNoticeErrorEnabled(enabled bool) *config {
 	return &config{
 		key:   configKeyNoticeErrorEnabled,
 		value: enabled,
+	}
+}
+
+func ConfigStatusCodeIgnored(statusCode []int) *config {
+	return &config{
+		key:   configKeyNoticeErrorEnabled,
+		value: statusCode,
 	}
 }
 
@@ -31,4 +39,13 @@ func noticeErrorEnabled(configMap map[string]interface{}) bool {
 		}
 	}
 	return false
+}
+
+func statusCodeIgnored(configMap map[string]interface{}) []int {
+	if val, ok := configMap[configKeyStatusCodeIgnored]; ok {
+		if boolVal, ok := val.([]int); ok {
+			return boolVal
+		}
+	}
+	return []int{}
 }
