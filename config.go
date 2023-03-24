@@ -43,8 +43,8 @@ func noticeErrorEnabled(configMap map[string]interface{}) bool {
 
 func statusCodeIgnored(configMap map[string]interface{}) []int {
 	if val, ok := configMap[configKeyStatusCodeIgnored]; ok {
-		if boolVal, ok := val.([]int); ok {
-			return boolVal
+		if v, ok := val.([]int); ok {
+			return v
 		}
 	}
 	return []int{}
