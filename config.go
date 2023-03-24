@@ -19,7 +19,7 @@ func ConfigNoticeErrorEnabled(enabled bool) *config {
 
 func ConfigStatusCodeIgnored(statusCode []int) *config {
 	return &config{
-		key:   configKeyNoticeErrorEnabled,
+		key:   configKeyStatusCodeIgnored,
 		value: statusCode,
 	}
 }
