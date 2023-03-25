@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	app.Use(nrfiber.Middleware(nr, nrfiber.ConfigNoticeErrorEnabled(true)))
+	app.Use(nrfiber.Middleware(nr, nrfiber.ConfigNoticeErrorEnabled(true), nr.ConfigStatusCodeIgnored([]int{401})))
 	app.Get("/give-me-error", func(ctx *fiber.Ctx) error {
 		err := customErr{Message: "wrong request", Code: 4329}
 		ctx.Status(http.StatusBadRequest).JSON(err)

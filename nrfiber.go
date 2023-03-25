@@ -30,6 +30,7 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 
 	configMap := createConfigMap(configs...)
 	noticeErrorEnabled := noticeErrorEnabled(configMap)
+	statusCodeIgnored := statusCodeIgnored(configMap)
 
 	return func(c *fiber.Ctx) error {
 		txn := app.StartTransaction(createTransactionName(c))
@@ -47,7 +48,16 @@ func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 				statusCode = fiberErr.Code
 			}
 			if noticeErrorEnabled {
-				txn.NoticeError(err)
+				found := false
+				for _, v := range statusCodeIgnored {
+					if v == statusCode {
+						found = true
+						break
+					}
+				}
+				if !found {
+					txn.NoticeError(err)
+				}
 			}
 		}
 
