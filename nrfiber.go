@@ -24,7 +24,7 @@ func FromContext(c *fiber.Ctx) *newrelic.Transaction {
 func Middleware(app *newrelic.Application, configs ...*config) fiber.Handler {
 	if nil == app {
 		return func(c *fiber.Ctx) error {
-			return nil
+			return c.Next()
 		}
 	}
 
